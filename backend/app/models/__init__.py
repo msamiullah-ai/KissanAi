@@ -1,27 +1,12 @@
-from .crop import Crop
-from .enums import AlertSeverity, AlertType, RiskLevel, Season, UserRole
-from .farm import Farm
-from .health import HealthEvent
-from .irrigation_alert import IrrigationAlert
-from .land_allocation import LandAllocation
-from .profit_analysis import ProfitAnalysis
-from .recommendation import Recommendation
-from .user import User
-from .weather_data import WeatherData
+# # app/models/__init__.py
 
-__all__ = [
-    "User",
-    "Farm",
-    "Crop",
-    "WeatherData",
-    "Recommendation",
-    "LandAllocation",
-    "ProfitAnalysis",
-    "IrrigationAlert",
-    "HealthEvent",
-    "AlertSeverity",
-    "AlertType",
-    "RiskLevel",
-    "Season",
-    "UserRole",
-]
+# # Keeping this file empty or minimal is the best way to avoid circular imports.
+# # Do not import the model classes here if they depend on each other.
+
+# from .crop import Crop
+# from .farm import Farm
+# from .user import User
+# # Only import models that have NO dependencies on other models.
+# # If Recommendation depends on Farm or Crop, DO NOT import it here.
+
+# __all__ = ["Crop", "Farm", "User"]

@@ -6,6 +6,7 @@ Create Date: 2026-05-17 00:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0001_initial"
@@ -15,17 +16,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    user_role = sa.Enum("farmer", "agronomist", "admin", name="user_role")
-    crop_season = sa.Enum("Rabi", "Kharif", "Zaid", name="crop_season")
-    risk_level = sa.Enum("low", "medium", "high", name="risk_level")
-    alert_type = sa.Enum("soil_moisture", "rainfall", "temperature", "custom", name="alert_type")
-    alert_severity = sa.Enum("low", "medium", "high", "critical", name="alert_severity")
-    user_role.create(op.get_bind(), checkfirst=True)
-    crop_season.create(op.get_bind(), checkfirst=True)
-    risk_level.create(op.get_bind(), checkfirst=True)
-    alert_type.create(op.get_bind(), checkfirst=True)
-    alert_severity.create(op.get_bind(), checkfirst=True)
-
+    # 1. Pre-create ALL Postgres Enum Types safely
+    postgresql.ENUM('farmer', 'agronomist', 'admin', name='user_role').create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM('kharif', 'rabi', 'zaid', 'perennial', name='crop_season').create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM('low', 'medium', 'high', name='risk_level').create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM('under_watering', 'over_watering', 'disease', 'weather_alert', name='alert_type').create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM('info', 'warning', 'critical', name='alert_severity').create(op.get_bind(), checkfirst=True)
+    
+    # 2. Create tables using the pre-created enums cleanly
     op.create_table(
         "users",
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True, nullable=False),
@@ -33,7 +31,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=128), nullable=False, unique=True),
         sa.Column("password_hash", sa.String(length=256), nullable=False),
         sa.Column("full_name", sa.String(length=150), nullable=True),
-        sa.Column("role", user_role, nullable=False, server_default="farmer"),
+        sa.Column("role", postgresql.ENUM('farmer', 'agronomist', 'admin', name='user_role', create_type=False), server_default="farmer", nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
@@ -60,12 +58,12 @@ def upgrade() -> None:
         "crops",
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("crop_name", sa.String(length=120), nullable=False),
-        sa.Column("season", crop_season, nullable=False),
+        sa.Column("season", postgresql.ENUM('kharif', 'rabi', 'zaid', 'perennial', name='crop_season', create_type=False), nullable=False),
         sa.Column("water_requirement", sa.Float(), nullable=False),
         sa.Column("average_cost", sa.Float(), nullable=False),
         sa.Column("expected_yield", sa.Float(), nullable=False),
         sa.Column("market_price", sa.Float(), nullable=False),
-        sa.Column("risk_level", risk_level, nullable=False),
+        sa.Column("risk_level", postgresql.ENUM('low', 'medium', 'high', name='risk_level', create_type=False), nullable=False),
         sa.Column("suitable_soil_types", sa.ARRAY(sa.String()), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
@@ -134,9 +132,9 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("farm_id", sa.UUID(as_uuid=True), sa.ForeignKey("farms.id", ondelete="CASCADE"), nullable=False),
         sa.Column("reporter_id", sa.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("alert_type", alert_type, nullable=False),
+        sa.Column("alert_type", postgresql.ENUM('under_watering', 'over_watering', 'disease', 'weather_alert', name='alert_type', create_type=False), nullable=False),
         sa.Column("alert_message", sa.String(length=400), nullable=False),
-        sa.Column("severity", alert_severity, nullable=False),
+        sa.Column("severity", postgresql.ENUM('info', 'warning', 'critical', name='alert_severity', create_type=False), nullable=False),
         sa.Column("weather_condition", sa.String(length=120), nullable=True),
         sa.Column("triggered_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -162,13 +160,10 @@ def downgrade() -> None:
     op.drop_table("farms")
     op.drop_index("idx_user_email", table_name="users")
     op.drop_table("users")
-    alert_severity = sa.Enum(name="alert_severity")
-    alert_type = sa.Enum(name="alert_type")
-    risk_level = sa.Enum(name="risk_level")
-    crop_season = sa.Enum(name="crop_season")
-    user_role = sa.Enum(name="user_role")
-    alert_severity.drop(op.get_bind(), checkfirst=True)
-    alert_type.drop(op.get_bind(), checkfirst=True)
-    risk_level.drop(op.get_bind(), checkfirst=True)
-    crop_season.drop(op.get_bind(), checkfirst=True)
-    user_role.drop(op.get_bind(), checkfirst=True)
+    
+    postgresql.ENUM(name="alert_severity").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="alert_type").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="risk_level").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="crop_season").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="user_role").drop(op.get_bind(), checkfirst=True)
+    

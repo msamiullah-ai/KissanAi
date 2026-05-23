@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { UserProfile } from '../types/platform';
 
@@ -22,16 +22,22 @@ export const useAuth = () => useContext(AuthContext);
 
 const storageKey = 'kissanai_auth_user';
 
+const loadStoredUser = (): UserProfile | null => {
+  const stored = localStorage.getItem(storageKey);
+  if (!stored) {
+    return null;
+  }
+  try {
+    return JSON.parse(stored) as UserProfile;
+  } catch {
+    localStorage.removeItem(storageKey);
+    return null;
+  }
+};
+
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      setUser(JSON.parse(stored) as UserProfile);
-    }
-  }, []);
+  const [user, setUser] = useState<UserProfile | null>(() => loadStoredUser());
 
   const saveUser = (profile: UserProfile) => {
     localStorage.setItem(storageKey, JSON.stringify(profile));
@@ -47,7 +53,6 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       token: `demo-jwt-${crypto.randomUUID()}`,
     };
     saveUser(profile);
-    navigate('/dashboard');
   };
 
   const register = async (name: string, email: string, password: string, district: string) => {
@@ -59,13 +64,12 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       token: `demo-jwt-${crypto.randomUUID()}`,
     };
     saveUser(profile);
-    navigate('/dashboard');
   };
 
   const logout = () => {
     localStorage.removeItem(storageKey);
     setUser(null);
-    navigate('/login');
+    navigate('/');
   };
 
   const value = useMemo(

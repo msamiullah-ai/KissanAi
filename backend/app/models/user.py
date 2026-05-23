@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, Enum, Index, String
+from sqlalchemy import Boolean, Column, Enum as SQLEnum, Index, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -16,7 +16,11 @@ class User(Base):
     email = Column(String(128), nullable=False, unique=True, index=True)
     password_hash = Column(String(256), nullable=False)
     full_name = Column(String(150), nullable=True)
-    role = Column(Enum(UserRole, name="user_role", native_enum=True), nullable=False, server_default=UserRole.FARMER.value)
+    role = Column(
+        SQLEnum(UserRole, name="user_role", native_enum=True, values_callable=lambda obj: [e.value for e in obj]), 
+        nullable=False, 
+        server_default=UserRole.FARMER.value
+    )
     is_active = Column(Boolean, nullable=False, server_default="true")
 
     farms = relationship("Farm", back_populates="owner", cascade="all, delete-orphan")

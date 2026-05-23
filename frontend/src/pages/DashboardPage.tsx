@@ -1,166 +1,212 @@
+import { motion } from 'framer-motion';
 import { useMemo } from 'react';
-import { ArrowUpRight, Leaf, Sparkles, Thermometer } from 'lucide-react';
+import { ArrowRight, CloudRain, Sparkles, Thermometer, ShieldCheck, AlertTriangle, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRecommendation } from '../hooks/useRecommendation';
+import { useWeather } from '../hooks/useWeather';
 import RecommendationLoader from '../components/RecommendationLoader';
-import CropRecommendationCard from '../components/CropRecommendationCard';
-import DashboardStatCard from '../components/DashboardStatCard';
-import WeatherAlertCard from '../components/WeatherAlertCard';
-import RiskIndicator from '../components/RiskIndicator';
-import ExplanationPanel from '../components/ExplanationPanel';
-import LandAllocationChart from '../components/LandAllocationChart';
-import AIConfidenceCard from '../components/AIConfidenceCard';
-import ProfitabilitySummary from '../components/ProfitabilitySummary';
 import EmptyState from '../components/EmptyState';
-import DashboardHero from '../components/DashboardHero';
-import SystemStatusPanel from '../components/SystemStatusPanel';
-import DistrictMap from '../components/DistrictMap';
-import WeatherPanel from '../components/WeatherPanel';
-import { exportReportAsPDF } from '../utils/pdfExport';
-import { statusItems, districtComparisonData } from '../utils/demoData';
 
 const DashboardPage = () => {
   const { data, isLoading, error } = useRecommendation();
   const navigate = useNavigate();
+  const weatherState = useWeather(data?.farm_analysis.district ?? null);
+  const weather = weatherState.weather;
 
-  const allocationData = useMemo(
-    () =>
-      data?.land_allocation.map((item) => ({
-        name: item.crop_name,
-        value: item.allocation_percentage,
-      })) ?? [],
-    [data],
-  );
+  if (isLoading) return <RecommendationLoader />;
 
-  const topCrop = data?.recommended_crops?.[0];
-  const highestRisk = data?.recommended_crops.some((crop) => crop.risk_level === 'High')
-    ? 'High'
-    : data?.recommended_crops.some((crop) => crop.risk_level === 'Medium')
-    ? 'Medium'
-    : 'Low';
+  if (!data && error)
+    return (
+      <EmptyState
+        title="Dashboard unavailable"
+        message="We could not load recommendation data. Please try again or open the recommendation workspace."
+        actionLink="/recommendation"
+      />
+    );
 
-  if (isLoading) {
-    return <RecommendationLoader />;
-  }
+  if (!data)
+    return (
+      <EmptyState
+        title="No recommendation summary yet"
+        message="Start in the AI workspace to generate your first crop recommendation and review the farm summary here."
+        actionLink="/recommendation"
+      />
+    );
 
-  if (!data && error) {
-    return <EmptyState title="Dashboard unavailable" message="We could not load recommendation data. Please try again or rerun the recommendation engine." actionLink="/recommendation" />;
-  }
+  const topCrop = data.recommended_crops[0];
+  const lastUpdate = new Date(data.generated_at).toLocaleString();
+  const alertCount = data.weather_alerts.length;
+  const statusLabel = data.ai_confidence_score >= 85 ? 'Ready to act' : 'Review suggested changes';
 
-  if (!data) {
-    return <EmptyState title="No recommendations yet" message="Generate a recommendation so the dashboard can display crop insights, profitability charts, and irrigation alerts." actionLink="/recommendation" />;
-  }
+  const overviewCards = [
+    {
+      title: 'Top recommendation',
+      value: topCrop?.crop_name ?? '—',
+      subtitle: `${Math.round(topCrop?.suitability_score ?? 0)}% suitability`,
+      icon: Sparkles,
+    },
+    {
+      title: 'Profit forecast',
+      value: `Rs ${data.profitability_summary.total_expected_profit.toLocaleString()}`,
+      subtitle: `Avg Rs ${data.profitability_summary.average_profit_per_acre.toLocaleString()}/acre`,
+      icon: Thermometer,
+    },
+    {
+      title: 'Weather status',
+      value: weather?.condition ?? data.farm_analysis.weather_summary,
+      subtitle: weatherState.offline ? 'Fallback weather' : 'Live weather feed',
+      icon: CloudRain,
+    },
+    {
+      title: 'Risk alert',
+      value: topCrop?.risk_level ?? 'Unknown',
+      subtitle: `${alertCount} advisories pending`,
+      icon: ShieldCheck,
+    },
+  ];
 
-  const handleExport = () => {
-    void exportReportAsPDF('dashboard-report', 'kissanai-report.pdf');
-  };
+  const quickActions = [
+    'Open recommendation workspace',
+    'Review top crop status',
+    'Check alerts and next action',
+  ];
+
+  const statusItems = [
+    { label: 'Last generated', value: lastUpdate, icon: Clock3 },
+    { label: 'Current status', value: statusLabel, icon: AlertTriangle },
+    { label: 'Confidence score', value: `${data.ai_confidence_score}%`, icon: Sparkles },
+  ];
 
   return (
-    <div className="space-y-10" id="dashboard-report">
-      <DashboardHero data={data} />
-
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <DashboardStatCard title="AI Confidence" value={`${data.ai_confidence_score}%`} Icon={Sparkles} accent="from-emerald-400 to-teal-400" />
-        <DashboardStatCard title="Expected Profit" value={`Rs ${data.profitability_summary.total_expected_profit}`} Icon={ArrowUpRight} accent="from-lime-400 to-emerald-300" />
-        <DashboardStatCard title="Land Area" value={`${data.farm_analysis.land_area} acres`} Icon={Leaf} accent="from-cyan-400 to-sky-400" />
-        <DashboardStatCard title="Risk Pulse" value={highestRisk} Icon={Thermometer} accent="from-amber-400 to-orange-400" />
-      </div>
-
-      {error && (
-        <div className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-5 text-amber-100 backdrop-blur-sm">
-          <p className="font-semibold">Warning: {error}</p>
-          <p className="mt-2 text-sm text-slate-300">Data has been loaded from a demo fallback to keep the dashboard functional.</p>
-        </div>
-      )}
-
-      <div className="grid gap-6 xl:grid-cols-[1.5fr,0.9fr]">
-        <div className="space-y-6">
-          <WeatherPanel district={data.farm_analysis.district} />
-          <SystemStatusPanel statuses={statusItems} />
-          <DistrictMap districts={districtComparisonData} />
-        </div>
-        <div>
-          <div className="glass-card rounded-[2rem] border border-white/10 bg-slate-900/80 p-6 shadow-glow">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Export report</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">AI agricultural PDF</h3>
-              </div>
-              <button type="button" onClick={handleExport} className="rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
-                Export PDF
-              </button>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.65, ease: 'easeOut' }}
+      className="space-y-6 py-6"
+    >
+      <section className="grid gap-6 xl:grid-cols-[1.7fr,0.9fr]">
+        <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="section-kicker text-emerald-300">Farm overview</p>
+              <h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">What’s happening on your farm</h1>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-400">Generate a premium PDF report including recommendations, profitability analysis, weather intelligence, and irrigation advice.</p>
+            <button
+              type="button"
+              onClick={() => navigate('/recommendation')}
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
+            >
+              Open recommendation workspace
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
-        </div>
-      </div>
+          <p className="mt-4 max-w-2xl text-slate-400">Summary-only notifications, current recommendation status, and the next recommended action for your farm.</p>
 
-      <div className="grid gap-6 xl:grid-cols-[1.5fr,0.9fr]">
-        <div className="space-y-6">
-          <div className="glass-card p-6">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Farm analysis summary</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">Conditions overview</h2>
-              </div>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-full bg-emerald-400/15 px-5 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/25"
-                onClick={() => navigate('/recommendation')}
-              >
-                Re-run recommendation
-              </button>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl bg-slate-900/80 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">District</p>
-                <p className="mt-3 text-xl font-semibold text-white">{data.farm_analysis.district}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-900/80 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Season</p>
-                <p className="mt-3 text-xl font-semibold text-white">{data.farm_analysis.season}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-900/80 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Soil type</p>
-                <p className="mt-3 text-xl font-semibold text-white">{data.farm_analysis.soil_type}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-900/80 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Water availability</p>
-                <p className="mt-3 text-xl font-semibold text-white">{data.farm_analysis.water_availability}</p>
-              </div>
-            </div>
-            <div className="mt-6 rounded-3xl bg-slate-950/80 p-5 text-slate-300">
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Weather summary</p>
-              <p className="mt-3 text-base leading-7 text-slate-200">{data.farm_analysis.weather_summary}</p>
-            </div>
-          </div>
-
-          <div className="glass-card p-6">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Crop recommendations</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Top AI picks</h3>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-200">{data.recommended_crops.length} crops</span>
-            </div>
-            <div className="grid gap-5">
-              {data.recommended_crops.map((crop) => (
-                <CropRecommendationCard key={crop.crop_name} crop={crop} />
-              ))}
-            </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {overviewCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <article key={card.title} className="rounded-[1.75rem] border border-white/10 bg-slate-950/90 p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-400">{card.title}</p>
+                      <p className="mt-3 text-2xl font-semibold text-white">{card.value}</p>
+                    </div>
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <p className="mt-4 text-sm text-slate-400">{card.subtitle}</p>
+                </article>
+              );
+            })}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <AIConfidenceCard confidence={data.ai_confidence_score} strength={topCrop?.recommendation_strength ?? 'Moderate'} data={data.recommended_crops} />
-          <ProfitabilitySummary summary={data.profitability_summary} recommendedCropsCount={data.recommended_crops.length} highestRisk={highestRisk} />
-          <LandAllocationChart allocation={data.land_allocation} />
-          <WeatherAlertCard alerts={data.weather_alerts} irrigation={data.irrigation_advice} />
-          <ExplanationPanel explanation={topCrop?.explanation ?? 'No explanation available.'} />
-          <RiskIndicator crops={data.recommended_crops} />
+        <aside className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <div className="mb-6">
+            <p className="section-kicker text-emerald-300">Recommendation status</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Quick status snapshot</h2>
+          </div>
+          <div className="space-y-4">
+            {statusItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Icon className="h-4 w-4 text-emerald-300" />
+                    <span className="text-sm uppercase tracking-[0.22em]">{item.label}</span>
+                  </div>
+                  <p className="mt-3 text-lg font-semibold text-white">{item.value}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 rounded-[1.75rem] border border-emerald-400/10 bg-emerald-400/5 p-5">
+            <p className="text-sm uppercase tracking-[0.22em] text-emerald-300">Next step</p>
+            <p className="mt-3 text-sm text-slate-300">Go to the recommendation workspace to refresh your crop plan, compare options, and validate the final strategy.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.25fr,0.75fr]">
+        <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="section-kicker text-emerald-300">Top summary</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Current recommendation at a glance</h2>
+            </div>
+            <span className="rounded-full bg-slate-950/80 px-4 py-2 text-sm font-semibold text-slate-200">Primary crop</span>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl bg-slate-950/80 p-5">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Recommended crop</p>
+              <p className="mt-3 text-3xl font-semibold text-white">{topCrop.crop_name}</p>
+              <p className="mt-2 text-sm text-slate-400">Suitability score: {Math.round(topCrop.suitability_score)}%</p>
+            </div>
+            <div className="rounded-3xl bg-slate-950/80 p-5">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Expected ROI</p>
+              <p className="mt-3 text-3xl font-semibold text-white">Rs {data.profitability_summary.total_expected_profit.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-slate-400">Avg Rs {data.profitability_summary.average_profit_per_acre.toLocaleString()}/acre</p>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.22em] text-slate-400">Alerts</p>
+              <p className="mt-3 text-lg font-semibold text-white">{alertCount} active recommendation advisories</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/recommendation')}
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
+            >
+              Open workspace
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <p className="section-kicker text-emerald-300">Support metrics</p>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-3xl bg-slate-950/80 p-4">
+              <p className="text-sm text-slate-400">Weather summary</p>
+              <p className="mt-3 text-lg font-semibold text-white">{weather?.condition ?? data.farm_analysis.weather_summary}</p>
+            </div>
+            <div className="rounded-3xl bg-slate-950/80 p-4">
+              <p className="text-sm text-slate-400">Recommendation confidence</p>
+              <p className="mt-3 text-lg font-semibold text-white">{data.ai_confidence_score}%</p>
+            </div>
+            <div className="rounded-3xl bg-slate-950/80 p-4">
+              <p className="text-sm text-slate-400">Primary risk</p>
+              <p className="mt-3 text-lg font-semibold text-white">{topCrop.risk_level}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </motion.div>
   );
 };
 

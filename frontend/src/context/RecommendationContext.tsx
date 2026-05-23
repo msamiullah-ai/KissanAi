@@ -35,7 +35,7 @@ const RecommendationProvider = ({ children }: { children: ReactNode }) => {
       setData(result.response);
       setIsOffline(result.isFallback);
       if (result.isFallback) {
-        setError('Backend offline — demo recommendation loaded.');
+        setError('Backend offline - demo recommendation loaded.');
       }
     } catch (err) {
       setError((err as Error).message || 'Unable to fetch recommendations.');

@@ -4,10 +4,15 @@ from sqlalchemy.orm import sessionmaker
 from ..config import AppConfig
 
 config = AppConfig()
-engine = create_engine(
-    config.database_url,
-    pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=10,
-)
+
+connect_args = {"check_same_thread": False} if config.database_url.startswith("sqlite") else {}
+engine = create_engine(config.database_url, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

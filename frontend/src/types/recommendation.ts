@@ -18,8 +18,8 @@ export interface CropRecommendationItem {
   risk_level: string;
   water_requirement: string;
   weather_compatibility: number;
-  final_score?: number;
-  score_breakdown?: {
+  final_score: number;
+  score_breakdown: {
     soil_score: number;
     weather_score: number;
     water_score: number;
@@ -58,7 +58,11 @@ export interface WeatherForecast {
 export interface WeatherResponse {
   district: string;
   temperature: number;
+  feels_like: number;
   humidity: number;
+  pressure: number;
+  clouds: number;
+  weather_icon: string;
   rainfall_chance: number;
   rainfall_mm: number;
   wind_speed: number;

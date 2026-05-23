@@ -38,7 +38,7 @@ class CachedWeather:
 
 
 class WeatherClient:
-    BASE_URL = "https://api.openweathermap.org/data/2.5/onecall"
+    BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
     TIMEOUT_SECONDS = 8
     RETRIES = 3
     BACKOFF_FACTOR = 1.25
@@ -71,7 +71,6 @@ class WeatherClient:
             "lon": lon,
             "appid": config.openweather_api_key,
             "units": "metric",
-            "exclude": "minutely,alerts",
         }
         return f"{cls.BASE_URL}?{urlencode(params)}"
 
@@ -163,21 +162,18 @@ class WeatherClient:
         return badges
 
     @classmethod
-    def _build_forecast(cls, daily: list[dict[str, Any]]) -> list[WeatherForecast]:
-        forecast_items: list[WeatherForecast] = []
-        for day in daily[:5]:
-            weather_data = day.get("weather", [{}])[0]
-            forecast_items.append(
-                WeatherForecast(
-                    date=datetime.utcfromtimestamp(day.get("dt", 0)),
-                    condition=weather_data.get("main", "Unknown"),
-                    temperature=round(day.get("temp", {}).get("day", 0.0), 1),
-                    humidity=int(day.get("humidity", 0)),
-                    rainfall_chance=round(day.get("pop", 0.0) * 100.0, 1),
-                    wind_speed=round(day.get("wind_speed", 0.0), 1),
-                )
+    def _build_forecast(cls, current: dict[str, Any], temperature: float, humidity: int, rainfall_chance: float, wind_speed: float) -> list[WeatherForecast]:
+        weather_data = current.get("weather", [{}])[0]
+        return [
+            WeatherForecast(
+                date=datetime.utcnow(),
+                condition=weather_data.get("main", "Unknown"),
+                temperature=temperature,
+                humidity=humidity,
+                rainfall_chance=rainfall_chance,
+                wind_speed=wind_speed,
             )
-        return forecast_items
+        ]
 
     @classmethod
     def get_weather_for_district(cls, district: str) -> WeatherResponse:
@@ -200,28 +196,40 @@ class WeatherClient:
             payload = cls._request(url)
             elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
 
-            current = payload.get("current", {})
-            daily = payload.get("daily", [])
-            weather_data = current.get("weather", [{}])[0]
-            rainfall_mm = float(current.get("rain", {}).get("1h", 0.0) if isinstance(current.get("rain", {}), dict) else current.get("rain", 0.0) or 0.0)
-            rainfall_chance = round(daily[0].get("pop", 0.0) * 100.0, 1) if daily else 0.0
-            temperature = round(current.get("temp", 0.0), 1)
-            humidity = int(current.get("humidity", 0))
-            wind_speed = round(current.get("wind_speed", 0.0), 1)
+            weather_data = payload.get("weather", [{}])[0]
+            main_data = payload.get("main", {})
+            wind_data = payload.get("wind", {})
+            clouds_data = payload.get("clouds", {})
+            rainfall_mm = float(payload.get("rain", {}).get("1h", 0.0) if isinstance(payload.get("rain", {}), dict) else payload.get("rain", 0.0) or 0.0)
+            temperature = round(main_data.get("temp", 0.0), 1)
+            feels_like = round(main_data.get("feels_like", 0.0), 1)
+            humidity = int(main_data.get("humidity", 0))
+            pressure = int(main_data.get("pressure", 0))
+            wind_speed = round(wind_data.get("speed", 0.0), 1)
+            cloud_coverage = int(clouds_data.get("all", 0))
             condition = weather_data.get("main", "Unknown")
             condition_description = weather_data.get("description", "")
+            weather_icon = weather_data.get("icon", "")
+            rainfall_chance = (
+                100.0 if rainfall_mm > 0
+                else round(min(max(cloud_coverage * 0.45 + humidity * 0.35, 0.0), 100.0), 1)
+            )
 
             response = WeatherResponse(
                 district=district,
                 temperature=temperature,
+                feels_like=feels_like,
                 humidity=humidity,
+                pressure=pressure,
+                clouds=cloud_coverage,
+                weather_icon=weather_icon,
                 rainfall_chance=rainfall_chance,
                 rainfall_mm=rainfall_mm,
                 wind_speed=wind_speed,
                 condition=condition,
                 condition_description=condition_description,
                 status_badges=cls._map_condition_to_badges(temperature, humidity, rainfall_chance, wind_speed),
-                forecast=cls._build_forecast(daily),
+                forecast=cls._build_forecast(payload, temperature, humidity, rainfall_chance, wind_speed),
                 fetched_at=datetime.utcnow(),
             )
             cls._store_cache(cache_key, response)

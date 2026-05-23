@@ -1,84 +1,169 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, CloudRain, Flame, Seedling, ShieldCheck } from 'lucide-react';
-import { landingFeatures, landingStats } from '../data/landingData';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Sprout, BarChart3, Cloud, TrendingUp, Shield, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+
+const metrics = [
+  { label: 'Crop Accuracy', value: '92%', icon: CheckCircle2 },
+  { label: 'Weather Intelligence', value: '99%', icon: Cloud },
+  { label: 'Profitability Optimization', value: '+28%', icon: TrendingUp },
+];
+
+const features = [
+  { title: 'Weather-aware forecasts', description: 'Live climate data with practical farm signals.', icon: Cloud },
+  { title: 'Smart crop selection', description: 'AI recommendations tuned for Punjab districts.', icon: Sprout },
+  { title: 'Profit and risk balance', description: 'See the right crop with trusted financial context.', icon: BarChart3 },
+  { title: 'Clear field actions', description: 'Simple, actionable outputs for daily decisions.', icon: Shield },
+];
+
+const steps = [
+  { title: 'Enter farm details', description: 'Share your district, season, soil and water profile.' },
+  { title: 'AI analyzes conditions', description: 'The system blends weather, crop and profit signals.' },
+  { title: 'Receive optimized guidance', description: 'Get a concise recommendation plan you can trust.' },
+];
 
 const LandingPage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthNavigation = (path: string) => {
+    if (isAuthenticated) {
+      navigate(path);
+      return;
+    }
+    navigate('/login', { state: { from: { pathname: path } } });
+  };
+
   return (
-    <div className="space-y-16 pt-8">
-      <section className="grid gap-10 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-glow md:grid-cols-[1.2fr,0.8fr] md:p-12">
-        <div className="space-y-8">
-          <span className="inline-flex items-center gap-3 rounded-full bg-emerald-500/15 px-4 py-2 text-sm text-emerald-200">
-            <Seedling className="h-5 w-5" />
-            AI-driven agriculture for Punjab farms
-          </span>
-          <div className="space-y-4">
-            <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">Intelligent Crop Recommendations for Punjab Agribusiness</h1>
-            <p className="max-w-2xl text-slate-300">
-              KissanAI delivers advanced farm analytics, weather-aware recommendations, and profitability insights so you can plan every acre with confidence.
-            </p>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Link
-              to="/recommendation"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
-            >
-              Generate Recommendations
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-white/10 px-6 py-3 text-sm text-slate-200 transition hover:border-emerald-300 hover:text-emerald-200"
-            >
-              View Dashboard
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {landingStats.map((stat) => (
-              <div key={stat.label} className="glass-card p-5">
-                <p className="text-4xl font-semibold text-white">{stat.value}</p>
-                <p className="mt-2 text-sm text-slate-300">{stat.label}</p>
+    <div className="overflow-hidden bg-slate-950">
+      <section className="relative px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-16 lg:grid-cols-[1.2fr,0.8fr] lg:items-center">
+            <div className="space-y-8">
+              <div className="inline-flex rounded-full border border-emerald-500/15 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200">
+                Trusted by modern agri-business teams
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#09210e] p-8 shadow-xl">
-          <div className="absolute -right-16 top-8 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
-          <div className="absolute left-8 bottom-12 h-32 w-32 rounded-full bg-slate-200/5 blur-3xl" />
-          <div className="relative space-y-6">
-            <div className="space-y-3 rounded-[1.8rem] border border-white/10 bg-slate-950/80 p-6">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-sm uppercase tracking-[0.25em]">Live AI Score</span>
-                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">Powered</span>
+              <div className="space-y-5 max-w-2xl">
+                <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl">Premium agricultural intelligence for confident farm decisions.</h1>
+                <p className="text-lg leading-8 text-slate-300">
+                  KissanAI turns weather, soil and crop data into clear recommendations and reliable profitability insights, delivered in a calm, professional experience.
+                </p>
               </div>
-              <p className="text-6xl font-semibold text-white">94%</p>
-              <p className="text-sm text-slate-400">Predictive intelligence for rainfall, crop selection, and profitability.</p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {landingFeatures.map((feature) => (
-                <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-emerald-300/50 hover:bg-emerald-400/5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
-                    {feature.icon}
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => handleAuthNavigation('/recommendation')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-emerald-300"
+                >
+                  Start recommendation
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAuthNavigation('/dashboard')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-slate-900 px-6 py-3 text-base font-semibold text-white transition hover:border-emerald-300/30 hover:bg-slate-800"
+                >
+                  View dashboard
+                </button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {metrics.map((metric) => (
+                  <div key={metric.label} className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+                    <metric.icon className="h-5 w-5 text-emerald-300" />
+                    <p className="mt-4 text-3xl font-semibold text-white">{metric.value}</p>
+                    <p className="mt-2 text-sm text-slate-400">{metric.label}</p>
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-white">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-slate-300">{feature.description}</p>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)]">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Dashboard preview</p>
+                  <p className="mt-2 text-lg font-semibold text-white">Clean insights, one view.</p>
                 </div>
-              ))}
+                <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200">Calm view</span>
+              </div>
+              <div className="space-y-4 rounded-[1.75rem] bg-slate-950/90 p-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-900/90 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Best crop</p>
+                    <p className="mt-3 text-xl font-semibold text-white">Wheat</p>
+                  </div>
+                  <div className="rounded-3xl bg-slate-900/90 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Profit estimate</p>
+                    <p className="mt-3 text-xl font-semibold text-white">Rs 72k</p>
+                  </div>
+                </div>
+                <div className="rounded-3xl bg-slate-900/90 p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm text-slate-400">
+                    <span>Land allocation</span>
+                    <span>42%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full w-1/2 rounded-full bg-emerald-400" />
+                  </div>
+                </div>
+                <div className="rounded-3xl bg-slate-900/90 p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Weather</p>
+                  <div className="mt-3 flex items-center justify-between text-white">
+                    <span>Cloudy</span>
+                    <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">Stable</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-glow md:p-12">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {features.map((feature) => (
+              <div key={feature.title} className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-6">
+                <feature.icon className="h-6 w-6 text-emerald-300" />
+                <h3 className="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
+                <p className="mt-3 text-slate-400">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center">
+            <p className="text-sm uppercase tracking-[0.3em] text-slate-500">How it works</p>
+            <h2 className="mt-4 text-4xl font-semibold text-white">Three simple steps to a confident farm plan</h2>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {steps.map((step, index) => (
+              <div key={step.title} className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">{index + 1}</div>
+                <h3 className="mt-5 text-xl font-semibold text-white">{step.title}</h3>
+                <p className="mt-3 text-slate-400">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-950/90 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 rounded-[2rem] border border-white/10 bg-slate-900/80 p-10 text-center sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-3xl font-semibold text-white">Built for modern agriculture and enterprise intelligence</h2>
-            <p className="mt-3 max-w-2xl text-slate-300">
-              Explore the smart dashboard, farm risk indicators, and tailored crop planning engine built to help Punjab farmers make agile decisions.
-            </p>
+            <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Ready to get started</p>
+            <p className="mt-3 text-3xl font-semibold text-white">Bring premium farm intelligence to your operations.</p>
           </div>
-          <div className="rounded-full border border-white/10 bg-emerald-500/10 px-5 py-3 text-sm text-emerald-200">
-            Smooth animations • Tailwind UI • Data-driven insights
-          </div>
+          <button
+            type="button"
+            onClick={() => handleAuthNavigation('/recommendation')}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-emerald-300"
+          >
+            Begin now
+            <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
       </section>
     </div>

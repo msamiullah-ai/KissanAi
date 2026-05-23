@@ -8,9 +8,10 @@ class UserRole(Enum):
 
 
 class Season(Enum):
-    RABI = "Rabi"
-    KHARIF = "Kharif"
-    ZAID = "Zaid"
+    RABI = "rabi"
+    KHARIF = "kharif"
+    ZAID = "zaid"
+    PERENNIAL = "perennial"
 
 
 class RiskLevel(Enum):
@@ -20,14 +21,13 @@ class RiskLevel(Enum):
 
 
 class AlertType(Enum):
-    SOIL_MOISTURE = "soil_moisture"
-    RAINFALL = "rainfall"
-    TEMPERATURE = "temperature"
-    CUSTOM = "custom"
+    UNDER_WATERING = "under_watering"
+    OVER_WATERING = "over_watering"
+    DISEASE = "disease"
+    WEATHER_ALERT = "weather_alert"
 
 
 class AlertSeverity(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+    INFO = "info"
+    WARNING = "warning"
     CRITICAL = "critical"

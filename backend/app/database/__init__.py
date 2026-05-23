@@ -1,4 +1,5 @@
+# app/database/__init__.py
 from .base import Base
-from .session import SessionLocal, engine
+from .session import SessionLocal, engine, get_db
 
-__all__ = ["Base", "SessionLocal", "engine"]
+__all__ = ["Base", "SessionLocal", "engine", "get_db"]

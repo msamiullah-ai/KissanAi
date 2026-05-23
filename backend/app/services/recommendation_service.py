@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Any, Dict, List, Sequence
 
+from app.constants import WEATHER_WEIGHT
 from app.database.session import SessionLocal
-from app.models import Crop
+from app.models.crop import Crop
+from app.models.farm import Farm
 from app.models.enums import RiskLevel as ModelRiskLevel
 from app.schemas.recommendation import (
     FarmAnalysisResponse,
@@ -28,6 +30,8 @@ from app.utils.explanation_engine import (
 )
 from app.utils.scoring import (
     allocate_land,
+    build_irrigation_advice,     # <-- Added missing import
+    build_weather_alerts,        # <-- Added missing import
     calculate_district_multiplier,
     calculate_final_score,
     calculate_profitability_score,
@@ -56,9 +60,9 @@ def _build_farm_analysis(payload: RecommendationRequest, weather_summary: str) -
 
 def _build_profit_summary(recommendations: Sequence[Dict[str, Any]], land_area: float) -> ProfitInsightResponse:
     """Build aggregated profit summary for the recommended crop set."""
-    total_profit = sum(item["predicted_profit"] for item in recommendations)
+    total_profit = sum(item["expected_profit"] for item in recommendations)  # <-- Changed here
     average_profit = round(total_profit / max(land_area, 1.0), 2)
-    highest = max(recommendations, key=lambda item: item["predicted_profit"], default=None)
+    highest = max(recommendations, key=lambda item: item["expected_profit"], default=None)  # <-- Changed here
     return ProfitInsightResponse(
         total_expected_profit=round(total_profit, 2),
         average_profit_per_acre=average_profit,
@@ -183,7 +187,7 @@ def _build_crop_payload(
                 "season_score": round(season_score, 2),
                 "district_multiplier": round(district_multiplier, 2),
                 "final_score": round(final_score, 2),
-                "weather_contribution": round(weather_score * 0.25, 2),
+                "weather_contribution": round(weather_score * WEATHER_WEIGHT, 2),
             },
         "final_score": final_score,
     }

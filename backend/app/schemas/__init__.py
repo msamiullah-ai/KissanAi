@@ -1,7 +1,8 @@
-from .crop import CropRecommendationCreate, CropRecommendationResponse
+from .api import ErrorResponse
+from .crop import DeprecatedEndpointResponse
 from .health import HealthResponse
 from .recommendation import (
-    CropRecommendationResponse as CropRecommendationItem,
+    CropRecommendationResponse,
     FarmAnalysisResponse,
     IrrigationAdviceResponse,
     LandAllocationResponse,
@@ -9,26 +10,31 @@ from .recommendation import (
     RecommendationRequest,
     RecommendationResponse,
     RecommendationStrength,
-    RecommendationStrength as RecommendationStrengthType,
     RiskLevel,
+    ScoreBreakdown,
     WaterRequirement,
     WeatherAlertResponse,
 )
+from .weather import WeatherCacheStatus, WeatherForecast, WeatherHealthResponse, WeatherResponse
 
 __all__ = [
-    "CropRecommendationCreate",
     "CropRecommendationResponse",
-    "HealthResponse",
+    "DeprecatedEndpointResponse",
+    "ErrorResponse",
     "FarmAnalysisResponse",
+    "HealthResponse",
     "IrrigationAdviceResponse",
     "LandAllocationResponse",
     "ProfitInsightResponse",
     "RecommendationRequest",
     "RecommendationResponse",
     "RecommendationStrength",
-    "RecommendationStrengthType",
     "RiskLevel",
+    "ScoreBreakdown",
     "WaterRequirement",
     "WeatherAlertResponse",
-    "CropRecommendationItem",
+    "WeatherCacheStatus",
+    "WeatherForecast",
+    "WeatherHealthResponse",
+    "WeatherResponse",
 ]

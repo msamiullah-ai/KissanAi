@@ -1,7 +1,7 @@
 from typing import Final
 
-SOIL_WEIGHT: Final = 0.30
-WEATHER_WEIGHT: Final = 0.25
+SOIL_WEIGHT: Final = 0.25
+WEATHER_WEIGHT: Final = 0.20
 WATER_WEIGHT: Final = 0.20
 PROFIT_WEIGHT: Final = 0.15
 RISK_WEIGHT: Final = 0.10

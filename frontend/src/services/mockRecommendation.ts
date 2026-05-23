@@ -16,8 +16,8 @@ export const fallbackRecommendation: RecommendationResponse = {
       confidence_score: 88,
       expected_profit: 125000,
       estimated_yield: 3.8,
-      risk_level: 'Low',
-      water_requirement: 'Moderate',
+      risk_level: 'low',
+      water_requirement: 'medium',
       weather_compatibility: 94,
       final_score: 92,
       score_breakdown: {
@@ -33,7 +33,7 @@ export const fallbackRecommendation: RecommendationResponse = {
       },
       explanation: 'Wheat is highly suited to your soil and season, with strong market demand and reliable yield estimates.',
       recommendation_reasons: ['High soil compatibility', 'Strong market margin', 'Stable water supply'],
-      recommendation_strength: 'Strong',
+      recommendation_strength: 'strong',
     },
     {
       crop_name: 'Maize',
@@ -41,8 +41,8 @@ export const fallbackRecommendation: RecommendationResponse = {
       confidence_score: 72,
       expected_profit: 82000,
       estimated_yield: 2.7,
-      risk_level: 'Medium',
-      water_requirement: 'High',
+      risk_level: 'medium',
+      water_requirement: 'high',
       weather_compatibility: 86,
       final_score: 78,
       score_breakdown: {
@@ -58,7 +58,7 @@ export const fallbackRecommendation: RecommendationResponse = {
       },
       explanation: 'Maize remains a valuable secondary crop, especially with additional irrigation support.',
       recommendation_reasons: ['Good profit potential', 'High demand', 'Moderate weather fit'],
-      recommendation_strength: 'Moderate',
+      recommendation_strength: 'moderate',
     },
     {
       crop_name: 'Sesame',
@@ -66,8 +66,8 @@ export const fallbackRecommendation: RecommendationResponse = {
       confidence_score: 60,
       expected_profit: 56000,
       estimated_yield: 1.9,
-      risk_level: 'High',
-      water_requirement: 'Low',
+      risk_level: 'high',
+      water_requirement: 'low',
       weather_compatibility: 72,
       final_score: 64,
       score_breakdown: {
@@ -83,7 +83,7 @@ export const fallbackRecommendation: RecommendationResponse = {
       },
       explanation: 'Sesame can add diversity with lower water usage, but carries higher weather sensitivity.',
       recommendation_reasons: ['Low irrigation need', 'Niche market', 'Higher weather risk'],
-      recommendation_strength: 'Weak',
+      recommendation_strength: 'weak',
     },
   ],
   land_allocation: [

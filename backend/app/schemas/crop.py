@@ -1,16 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class CropRecommendationCreate(BaseModel):
-    soil_type: str
-    rainfall_mm: float
-    temperature_c: float
-    budget_per_acre: float
+class DeprecatedEndpointResponse(BaseModel):
+    status: str = Field(..., examples=["deprecated"])
+    message: str = Field(..., examples=["The crop recommendation endpoint has been retired."])
+    replacement_endpoint: str = Field(..., examples=["POST /api/recommendations/generate"])
 
-
-class CropRecommendationResponse(BaseModel):
-    crop_name: str
-    soil_type: str
-    expected_yield: float
-    season: str
-    confidence: float
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "status": "deprecated",
+                "message": "The crop recommendation endpoint has been retired.",
+                "replacement_endpoint": "POST /api/recommendations/generate",
+            }
+        }
+    )

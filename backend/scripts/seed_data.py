@@ -1,5 +1,11 @@
 from app.database.session import SessionLocal
-from app.models import Crop, Farm, User, UserRole, RiskLevel, Season
+# Models
+from app.models.crop import Crop
+from app.models.farm import Farm
+from app.models.user import User
+
+# Enums (assuming they are in models/enums.py)
+from app.models.enums import UserRole, RiskLevel, Season
 
 
 def seed_crops(session):
@@ -55,6 +61,7 @@ def seed_crops(session):
             suitable_soil_types=["Clay", "Loamy"],
         ),
     ]
+
     session.add_all(crops)
 
 
@@ -66,6 +73,7 @@ def seed_user_and_farm(session):
         full_name="Punjab Farmer",
         role=UserRole.FARMER,
     )
+
     session.add(user)
     session.flush()
 
@@ -79,19 +87,23 @@ def seed_user_and_farm(session):
         latitude=31.6340,
         longitude=74.8723,
     )
+
     session.add(farm)
 
 
 def run() -> None:
     with SessionLocal() as session:
         existing = session.query(Crop).count()
+
         if existing:
             print("Seed data already exists. Skipping.")
             return
 
         seed_crops(session)
         seed_user_and_farm(session)
+
         session.commit()
+
         print("Seed data inserted successfully.")
 
 
