@@ -6,6 +6,10 @@ Built using React, FastAPI, PostgreSQL, and AI-driven analytics workflows.
 
 ---
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/2a00e5a5-3098-4fa8-9a69-207b33278472" />
+
+---
+
 ## Features
 
 * AI crop recommendation engine
